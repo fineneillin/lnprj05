@@ -412,35 +412,66 @@ render();
 document.getElementById('start-btn').addEventListener('click', startExperience);
 
 async function startExperience() {
-  document.getElementById('overlay').style.display = 'none';
-  document.getElementById('cam-wrap').style.display = 'block';
-  document.getElementById('hud').style.display = 'block';
-  document.getElementById('badge').style.display = 'block';
+  const btn = document.getElementById('start-btn');
+  const desc = document.querySelector('.ov-desc');
+  btn.textContent = '載入中…';
+  btn.disabled = true;
 
-  const vid = document.getElementById('vid');
+  try {
+    // 1. Request camera permission directly
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { width: 640, height: 480, facingMode: 'user' },
+      audio: false,
+    });
 
-  const hands = new Hands({
-    locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
-  });
+    const vid = document.getElementById('vid');
+    vid.srcObject = stream;
+    vid.play();
 
-  hands.setOptions({
-    maxNumHands: 1,
-    modelComplexity: 1,
-    minDetectionConfidence: 0.65,
-    minTrackingConfidence: 0.55,
-  });
+    // 2. Init MediaPipe Hands
+    const hands = new Hands({
+      locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/${file}`
+    });
 
-  hands.onResults(onHandResults);
+    hands.setOptions({
+      maxNumHands: 1,
+      modelComplexity: 1,
+      minDetectionConfidence: 0.65,
+      minTrackingConfidence: 0.55,
+    });
 
-  const camera = new Camera(vid, {
-    onFrame: async () => {
-      await hands.send({ image: vid });
-    },
-    width: 640,
-    height: 480,
-  });
+    hands.onResults(onHandResults);
 
-  camera.start();
+    // 3. Hide overlay, show UI
+    document.getElementById('overlay').style.display = 'none';
+    document.getElementById('cam-wrap').style.display = 'block';
+    document.getElementById('hud').style.display = 'block';
+    document.getElementById('badge').style.display = 'block';
+
+    // 4. Frame loop — send video frames to MediaPipe manually
+    let running = true;
+    async function frameLoop() {
+      if (!running) return;
+      if (vid.readyState >= 2) {
+        await hands.send({ image: vid });
+      }
+      requestAnimationFrame(frameLoop);
+    }
+    frameLoop();
+
+  } catch (err) {
+    // Show friendly error in overlay
+    btn.textContent = '重試';
+    btn.disabled = false;
+    if (err.name === 'NotAllowedError') {
+      desc.textContent = '請允許瀏覽器使用攝影鏡頭，然後重試。';
+    } else if (err.name === 'NotFoundError') {
+      desc.textContent = '找不到攝影鏡頭，請確認裝置有鏡頭並已連接。';
+    } else {
+      desc.textContent = '發生錯誤：' + err.message;
+    }
+    console.error(err);
+  }
 }
 
 // Palm landmark indices
