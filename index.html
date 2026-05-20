@@ -198,14 +198,14 @@ function resize() {
     });
   }
 }
-resize();
-window.addEventListener('resize', resize);
-
 // ─────────────────────────────────────────────
 //  Stars
 // ─────────────────────────────────────────────
 const STAR_COUNT = 320;
 let stars = [];
+
+resize();
+window.addEventListener('resize', resize);
 
 function initStars() {
   stars = Array.from({ length: STAR_COUNT }, () => {
