@@ -397,7 +397,7 @@ async function startExperience() {
       locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/${file}`
     });
     hands.setOptions({
-      maxNumHands: 2,
+      maxNumHands: 1,
       modelComplexity: 1,
       minDetectionConfidence: 0.65,
       minTrackingConfidence: 0.55,
@@ -572,5 +572,7 @@ function drawCamPreview(lm) {
 })();
 </script>
 
+<script src="https://lnprj.neillin-lct.workers.dev/lnprj-nav.js"></script>
+<script>LNPRJ.init({ current: 5, basePath: '../' });</script>
 </body>
 </html>
